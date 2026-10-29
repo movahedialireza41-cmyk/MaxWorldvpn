@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Live ping uses a tiny plain-HTTP request through the local proxy. -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">cp.cloudflare.com</domain>
+    </domain-config>
+</network-security-config>
