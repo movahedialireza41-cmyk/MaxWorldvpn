@@ -12,7 +12,7 @@ import java.net.URL
  * The check goes through the local proxy while the VPN is connected, so it works when GitHub is filtered.
  */
 object Updater {
-    const val REPO = "" // example: "alireza/MaxWorld"
+    const val REPO = "movahedialireza41-cmyk/MaxWorldvpn" // example: "alireza/MaxWorld"
 
     class Info(val version: String, val page: String, val apk: String)
 
