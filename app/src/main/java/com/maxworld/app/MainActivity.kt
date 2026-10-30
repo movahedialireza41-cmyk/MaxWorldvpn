@@ -209,11 +209,17 @@ class MainActivity : ComponentActivity() {
             var showOnboard by remember { mutableStateOf(!Prefs.onboardDone(this)) }
             var showPerms by remember { mutableStateOf(!notifGranted(this)) }
             var tab by remember { mutableIntStateOf(0) }
+            var showNew by remember {
+                val seen = Prefs.lastSeenVersion(this)
+                val fresh = seen.isEmpty() && !Prefs.onboardDone(this)
+                if (fresh) Prefs.setLastSeenVersion(this, BuildConfigVersion.NAME)
+                mutableStateOf(!fresh && seen != BuildConfigVersion.NAME)
+            }
 
             LaunchedEffect(palette.light) { applySystemBars(palette.light) }
             LaunchedEffect(Unit) {
                 try {
-                    Subs.autoUpdate()
+                    Subs.autoUpdate(Prefs.subHours(this@MainActivity))
                 } catch (e: Exception) {
                 }
             }
@@ -259,6 +265,12 @@ class MainActivity : ComponentActivity() {
                             onSelect = { tab = it },
                             modifier = Modifier.align(Alignment.BottomCenter)
                         )
+                        if (showNew) {
+                            WhatsNewDialog(onDismiss = {
+                                Prefs.setLastSeenVersion(this@MainActivity, BuildConfigVersion.NAME)
+                                showNew = false
+                            })
+                        }
                     }
                 }
             }

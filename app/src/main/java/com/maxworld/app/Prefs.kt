@@ -40,6 +40,18 @@ object Prefs {
     fun notifSpeed(c: Context): Boolean = p(c).getBoolean("notif_speed", true)
     fun setNotifSpeed(c: Context, v: Boolean) = p(c).edit().putBoolean("notif_speed", v).apply()
 
+    /** Notify when a subscription is nearly out of data or about to expire. */
+    fun subAlerts(c: Context): Boolean = p(c).getBoolean("sub_alerts", true)
+    fun setSubAlerts(c: Context, v: Boolean) = p(c).edit().putBoolean("sub_alerts", v).apply()
+
+    /** Hours between automatic subscription refreshes; 0 = off. */
+    fun subHours(c: Context): Int = p(c).getInt("sub_hours", 24)
+    fun setSubHours(c: Context, v: Int) = p(c).edit().putInt("sub_hours", v).apply()
+
+    /** Version whose "what's new" page the user has already seen. */
+    fun lastSeenVersion(c: Context): String = p(c).getString("seen_version", "") ?: ""
+    fun setLastSeenVersion(c: Context, v: String) = p(c).edit().putString("seen_version", v).apply()
+
     /** The short welcome tour is shown once. */
     fun onboardDone(c: Context): Boolean = p(c).getBoolean("onboard_done", false)
     fun setOnboardDone(c: Context, v: Boolean) = p(c).edit().putBoolean("onboard_done", v).apply()

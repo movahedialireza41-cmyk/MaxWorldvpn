@@ -26,10 +26,12 @@ data class Sub(
 object Subs {
     val list = mutableStateListOf<Sub>()
     private var file: File? = null
+    private var appCtx: Context? = null
     private const val DAY = 24L * 60 * 60 * 1000
 
     fun init(ctx: Context) {
         if (file != null) return
+        appCtx = ctx.applicationContext
         file = File(ctx.applicationContext.filesDir, "subs.json")
         load()
     }
@@ -65,16 +67,24 @@ object Subs {
             if (info != null) next = next.copy(used = info[0], total = info[1], expire = info[2])
             list[i] = next
             save()
+            appCtx?.let { SubAlerts.check(it, next) }
         }
         return servers.size
     }
 
     /** Refreshes subscriptions that have not been updated for a day. */
-    suspend fun autoUpdate() {
+    suspend fun autoUpdate(hours: Int = 24) {
+        if (hours <= 0) return
         val now = System.currentTimeMillis()
         for (s in list.toList()) {
-            if (now - s.updatedAt > DAY) refresh(s)
+            if (now - s.updatedAt > hours * 3_600_000L) refresh(s)
         }
+    }
+
+    /** Refreshes one subscription when its numbers are older than [minutes]; keeps the data gauge current. */
+    suspend fun refreshIfStale(id: String, minutes: Int = 15) {
+        val s = list.firstOrNull { it.id == id } ?: return
+        if (System.currentTimeMillis() - s.updatedAt > minutes * 60_000L) refresh(s)
     }
 
     /** "upload=1; download=2; total=3; expire=1700000000" -> [used, total, expireMs], or null. */

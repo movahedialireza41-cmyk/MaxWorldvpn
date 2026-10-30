@@ -212,6 +212,8 @@ fun HomeScreen(onToggle: () -> Unit) {
                 }
             }
 
+            DataTank(cfg)
+
             GlassCard(Modifier.fillMaxWidth().fadeSlideIn(200)) {
                 Text(
                     text = stringResource(R.string.selected_server),
@@ -240,6 +242,14 @@ fun HomeScreen(onToggle: () -> Unit) {
                                 color = p.muted,
                                 fontSize = 12.sp
                             )
+                            val usedHere = Usage.serverTotal(cfg.id)
+                            if (usedHere > 0L) {
+                                Text(
+                                    stringResource(R.string.server_used_fmt, Traffic.bytes(usedHere)),
+                                    color = p.accent,
+                                    fontSize = 11.sp
+                                )
+                            }
                         }
                         PingBadge(if (state == ConnState.CONNECTED && Traffic.livePing != 0L) Traffic.livePing else cfg.ping)
                     }

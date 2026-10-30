@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -55,6 +56,8 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
     var failover by remember { mutableStateOf(Prefs.autoFailover(ctx)) }
     var notifSpeed by remember { mutableStateOf(Prefs.notifSpeed(ctx)) }
     var speedMb by remember { mutableStateOf(Prefs.speedMb(ctx)) }
+    var subHours by remember { mutableStateOf(Prefs.subHours(ctx)) }
+    var subAlerts by remember { mutableStateOf(Prefs.subAlerts(ctx)) }
     var autoMode by remember { mutableStateOf(Prefs.autoMode(ctx)) }
     var lockOn by remember { mutableStateOf(AppLock.enabled(ctx)) }
     var bioOn by remember { mutableStateOf(AppLock.bioEnabled(ctx)) }
@@ -63,6 +66,7 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
     var showPin by remember { mutableStateOf(false) }
     var showLogs by remember { mutableStateOf(false) }
     var showDoctor by remember { mutableStateOf(false) }
+    var showCleanIp by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -206,6 +210,23 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
                         }
                     }
                 }
+                Spacer(Modifier.height(14.dp))
+                Text(stringResource(R.string.sub_auto_title), color = p.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.sub_auto_desc), color = p.muted, fontSize = 12.sp)
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(0, 6, 12, 24, 48).forEach { h ->
+                        Chip(if (h == 0) stringResource(R.string.auto_off) else "$h h", subHours == h) {
+                            subHours = h
+                            Prefs.setSubHours(ctx, h)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+                SwitchRow(R.string.sub_alert_title, R.string.sub_alert_desc, subAlerts) {
+                    subAlerts = it
+                    Prefs.setSubAlerts(ctx, it)
+                }
             }
 
             // ------------------------------------------------------- auto connect
@@ -264,6 +285,8 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
                 Spacer(Modifier.height(14.dp))
                 ActionRow(R.string.logs_title, R.string.logs_desc) { showLogs = true }
                 Spacer(Modifier.height(14.dp))
+                ActionRow(R.string.cip_title, R.string.cip_row_desc) { showCleanIp = true }
+                Spacer(Modifier.height(14.dp))
                 ActionRow(R.string.backup_export, R.string.backup_export_desc) { exportLauncher.launch("maxworld-backup.json") }
                 Spacer(Modifier.height(14.dp))
                 ActionRow(R.string.backup_import, R.string.backup_import_desc) { importLauncher.launch(arrayOf("*/*")) }
@@ -311,11 +334,12 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
     if (showThemes) ThemesDialog(themeId, onTheme, onDismiss = { showThemes = false })
     if (showLogs) LogsDialog(onDismiss = { showLogs = false })
     if (showDoctor) DoctorDialog(onDismiss = { showDoctor = false })
+    if (showCleanIp) CleanIpDialog(onDismiss = { showCleanIp = false })
 }
 
 /** App version, kept here so no BuildConfig generation is needed. */
 object BuildConfigVersion {
-    const val NAME = "1.1.0"
+    const val NAME = "1.2.0"
 }
 
 @Composable

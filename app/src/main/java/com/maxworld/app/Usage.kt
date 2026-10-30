@@ -17,6 +17,7 @@ object Usage {
     private var pendingDown = 0L
     private var pendingUp = 0L
     private var lastFlush = 0L
+    private val pendingSrv = HashMap<String, LongArray>()
     private val dayFmt = SimpleDateFormat("yyyyMMdd", Locale.US)
 
     fun init(c: Context) {
@@ -49,6 +50,12 @@ object Usage {
         lastUp = up
         pendingDown += dd
         pendingUp += du
+        val sid = ConfigStore.selectedId
+        if (sid.isNotEmpty() && (dd > 0 || du > 0)) {
+            val a = pendingSrv.getOrPut(sid) { LongArray(2) }
+            a[0] += dd
+            a[1] += du
+        }
         val now = System.currentTimeMillis()
         if (now - lastFlush > 60_000 || pendingDown + pendingUp > 5_000_000) flush()
     }
@@ -70,12 +77,31 @@ object Usage {
             // drop old days
             val keys = o.keys().asSequence().toList().sorted()
             if (keys.size > KEEP_DAYS) keys.take(keys.size - KEEP_DAYS).forEach { o.remove(it) }
-            p.edit().putString("days", o.toString()).apply()
+            val srv = JSONObject(p.getString("servers", "{}") ?: "{}")
+            for ((id, a) in pendingSrv) {
+                val c = srv.optJSONArray(id)
+                srv.put(id, org.json.JSONArray().put((c?.optLong(0) ?: 0L) + a[0]).put((c?.optLong(1) ?: 0L) + a[1]))
+            }
+            p.edit().putString("days", o.toString()).putString("servers", srv.toString()).apply()
+            pendingSrv.clear()
             pendingDown = 0L
             pendingUp = 0L
         } catch (e: Exception) {
         }
         lastFlush = System.currentTimeMillis()
+    }
+
+    /** Total bytes (down + up) used through one server since it was first used. */
+    @Synchronized
+    fun serverTotal(id: String): Long {
+        val p = prefs() ?: return 0L
+        val pend = pendingSrv[id]?.let { it[0] + it[1] } ?: 0L
+        return try {
+            val a = JSONObject(p.getString("servers", "{}") ?: "{}").optJSONArray(id)
+            (a?.optLong(0) ?: 0L) + (a?.optLong(1) ?: 0L) + pend
+        } catch (e: Exception) {
+            pend
+        }
     }
 
     class Day(val label: String, val down: Long, val up: Long)
@@ -105,6 +131,7 @@ object Usage {
     fun clear() {
         pendingDown = 0L
         pendingUp = 0L
-        prefs()?.edit()?.remove("days")?.apply()
+        pendingSrv.clear()
+        prefs()?.edit()?.remove("days")?.remove("servers")?.apply()
     }
 }

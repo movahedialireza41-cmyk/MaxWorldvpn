@@ -1,0 +1,119 @@
+name: Build MaxWorld APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.27'
+          cache: false
+
+      - name: Locate Android NDK
+        run: |
+          NDK="${ANDROID_NDK_LATEST_HOME:-${ANDROID_NDK_HOME:-}}"
+          if [ -z "$NDK" ] || [ ! -d "$NDK" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018"
+            NDK="$ANDROID_HOME/ndk/27.2.12479018"
+          fi
+          echo "Using NDK at $NDK"
+          echo "ANDROID_NDK_HOME=$NDK" >> "$GITHUB_ENV"
+
+      - name: Build Xray core (libv2ray.aar)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          go install golang.org/x/mobile/cmd/gobind@latest
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          git clone --depth 1 https://github.com/2dust/AndroidLibXrayLite /tmp/xraylib
+          cd /tmp/xraylib
+          gomobile init
+          go mod tidy
+          go get golang.org/x/mobile/bind || true
+          gomobile bind -v -androidapi 26 -trimpath -ldflags='-s -w -buildid= -checklinkname=0' -target=android/arm64,android/arm -o libv2ray.aar ./
+          mkdir -p "$GITHUB_WORKSPACE/app/libs"
+          cp libv2ray.aar "$GITHUB_WORKSPACE/app/libs/libv2ray.aar"
+          ls -la "$GITHUB_WORKSPACE/app/libs"
+
+      - name: Build tunnel (hev-socks5-tunnel)
+        run: |
+          mkdir -p /tmp/hev
+          git clone --recursive --depth 1 --shallow-submodules https://github.com/heiher/hev-socks5-tunnel /tmp/hev/jni
+          cd /tmp/hev
+          "$ANDROID_NDK_HOME/ndk-build" \
+            NDK_PROJECT_PATH=. \
+            APP_BUILD_SCRIPT=jni/Android.mk \
+            "APP_ABI=arm64-v8a armeabi-v7a" \
+            APP_PLATFORM=android-26 \
+            NDK_LIBS_OUT=./libs \
+            NDK_OUT=./obj
+          for abi in arm64-v8a armeabi-v7a; do
+            mkdir -p "$GITHUB_WORKSPACE/app/src/main/jniLibs/$abi"
+            cp "libs/$abi/libhev-socks5-tunnel.so" "$GITHUB_WORKSPACE/app/src/main/jniLibs/$abi/"
+          done
+          echo "--- JNI symbol check (expect hev/htproxy/TProxyService) ---"
+          strings libs/arm64-v8a/libhev-socks5-tunnel.so | grep -i htproxy || echo "WARNING: htproxy symbols not found"
+
+      - name: Bundle geo files (Iran rules and ad lists)
+        continue-on-error: true
+        run: |
+          mkdir -p app/src/main/assets/geo
+          for f in geoip.dat geosite.dat; do
+            curl -fsSL --retry 3 -o "app/src/main/assets/geo/$f" "https://github.com/Chocolate4U/Iran-v2ray-rules/releases/latest/download/$f" \
+              || curl -fsSL --retry 3 -o "app/src/main/assets/geo/$f" "https://cdn.jsdelivr.net/gh/chocolate4u/Iran-v2ray-rules@release/$f" \
+              || rm -f "app/src/main/assets/geo/$f"
+          done
+          ls -l app/src/main/assets/geo
+
+      - name: Create signing key
+        run: |
+          mkdir -p "$HOME/.android"
+          keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" \
+            -storepass android -keypass android -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build release APK
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaxWorld-apk
+          path: app/build/outputs/apk/release/app-release.apk
+
+      - name: Publish APK to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          cp app/build/outputs/apk/release/app-release.apk "MaxWorld-$VER.apk"
+          if ! gh release view "v$VER" >/dev/null 2>&1; then
+            gh release create "v$VER" --target "$GITHUB_SHA" --title "MaxWorld $VER" --notes "MaxWorld $VER"
+          fi
+          gh release upload "v$VER" "MaxWorld-$VER.apk" --clobber

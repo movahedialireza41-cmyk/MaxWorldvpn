@@ -3,7 +3,12 @@ package com.maxworld.app
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -182,11 +187,46 @@ fun UpdateCard() {
         Spacer(Modifier.height(4.dp))
         Text(stringResource(R.string.update_desc), color = p.muted, fontSize = 12.sp)
         Spacer(Modifier.height(10.dp))
-        Chip(stringResource(R.string.update_download), true) {
-            val target = info.apk.ifEmpty { info.page }
-            try {
-                ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (ignored: Exception) {
+        val scope = rememberCoroutineScope()
+        when (Updater.dlState) {
+            1 -> {
+                Text(
+                    stringResource(R.string.update_downloading_fmt, Updater.dlPercent),
+                    color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(8.dp))
+                Box(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(p.track)) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth(Updater.dlPercent / 100f)
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Brush.horizontalGradient(listOf(p.accent, p.accent2)))
+                    )
+                }
+            }
+            2 -> {
+                Text(stringResource(R.string.update_ready), color = p.ok, fontSize = 13.sp)
+                Spacer(Modifier.height(8.dp))
+                Chip(stringResource(R.string.update_install), true) { Updater.install(ctx) }
+            }
+            else -> {
+                if (Updater.dlState == 3) {
+                    Text(stringResource(R.string.update_dl_failed), color = p.warn, fontSize = 12.sp)
+                    Spacer(Modifier.height(8.dp))
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Chip(stringResource(R.string.update_download), true) {
+                        if (info.apk.isNotEmpty()) {
+                            scope.launch(Dispatchers.IO) { Updater.download(ctx.applicationContext, info.apk) }
+                        } else {
+                            try {
+                                ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(info.page)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            } catch (ignored: Exception) {
+                            }
+                        }
+                    }
+                }
             }
         }
     }
