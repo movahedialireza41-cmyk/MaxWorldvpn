@@ -372,7 +372,7 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
 
 /** App version, kept here so no BuildConfig generation is needed. */
 object BuildConfigVersion {
-    const val NAME = "1.3.2"
+    const val NAME = "1.3.3"
 }
 
 @Composable

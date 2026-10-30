@@ -209,6 +209,7 @@ class MainActivity : ComponentActivity() {
             var showOnboard by remember { mutableStateOf(!Prefs.onboardDone(this)) }
             var showPerms by remember { mutableStateOf(!notifGranted(this)) }
             var tab by remember { mutableIntStateOf(0) }
+            var laterUpdate by remember { mutableStateOf(false) }
             var showNew by remember {
                 val seen = Prefs.lastSeenVersion(this)
                 val fresh = seen.isEmpty() && !Prefs.onboardDone(this)
@@ -270,6 +271,8 @@ class MainActivity : ComponentActivity() {
                                 Prefs.setLastSeenVersion(this@MainActivity, BuildConfigVersion.NAME)
                                 showNew = false
                             })
+                        } else if (!laterUpdate && Updater.available != null) {
+                            UpdatePromptDialog(onLater = { laterUpdate = true })
                         }
                     }
                 }

@@ -114,6 +114,10 @@ jobs:
           VER=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
           cp app/build/outputs/apk/release/app-release.apk "MaxWorld-$VER.apk"
           if ! gh release view "v$VER" >/dev/null 2>&1; then
-            gh release create "v$VER" --target "$GITHUB_SHA" --title "MaxWorld $VER" --notes "MaxWorld $VER"
+            if [ -f RELEASE_NOTES.md ]; then
+              gh release create "v$VER" --target "$GITHUB_SHA" --title "MaxWorld $VER" --notes-file RELEASE_NOTES.md
+            else
+              gh release create "v$VER" --target "$GITHUB_SHA" --title "MaxWorld $VER" --notes "MaxWorld $VER"
+            fi
           fi
           gh release upload "v$VER" "MaxWorld-$VER.apk" --clobber

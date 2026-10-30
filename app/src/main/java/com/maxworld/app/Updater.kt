@@ -14,7 +14,7 @@ import java.net.URL
 object Updater {
     const val REPO = "movahedialireza41-cmyk/MaxWorldvpn"
 
-    class Info(val version: String, val page: String, val apk: String)
+    class Info(val version: String, val page: String, val apk: String, val notes: String = "")
 
     var available by mutableStateOf<Info?>(null)
     var checking by mutableStateOf(false)
@@ -181,6 +181,56 @@ object Updater {
         return null
     }
 
+    /** Picks the Persian or English part of RELEASE_NOTES.md ("## fa" / "## en" headings). */
+    private fun pickNotes(text: String): String {
+        val sections = HashMap<String, StringBuilder>()
+        var cur: StringBuilder? = null
+        for (line in text.lines()) {
+            val h = line.trim().lowercase()
+            if (h == "## fa" || h == "## en") {
+                cur = StringBuilder().also { sections[h.removePrefix("## ")] = it }
+            } else cur?.append(line)?.append('\n')
+        }
+        val lang = if (java.util.Locale.getDefault().language == "fa") "fa" else "en"
+        return (sections[lang] ?: sections["en"])?.toString()?.trim() ?: text.trim()
+    }
+
+    /** Release notes of [tag]: the RELEASE_NOTES.md file of that version, else the release description. */
+    private fun fetchNotes(tag: String): String {
+        try {
+            val c = URL("https://raw.githubusercontent.com/$REPO/$tag/RELEASE_NOTES.md").openConnection(proxy()) as HttpURLConnection
+            c.connectTimeout = 8000
+            c.readTimeout = 8000
+            c.setRequestProperty("User-Agent", "MaxWorld")
+            try {
+                if (c.responseCode == 200) {
+                    val text = c.inputStream.bufferedReader().use { it.readText().take(20000) }
+                    if (text.isNotBlank()) return pickNotes(text)
+                }
+            } finally {
+                c.disconnect()
+            }
+        } catch (ignored: Exception) {
+        }
+        try {
+            val c = URL("https://api.github.com/repos/$REPO/releases/tags/$tag").openConnection(proxy()) as HttpURLConnection
+            c.connectTimeout = 8000
+            c.readTimeout = 8000
+            c.setRequestProperty("Accept", "application/vnd.github+json")
+            c.setRequestProperty("User-Agent", "MaxWorld")
+            try {
+                if (c.responseCode == 200) {
+                    val body = JSONObject(c.inputStream.bufferedReader().use { it.readText() }).optString("body")
+                    if (body.isNotBlank() && !body.startsWith("MaxWorld ")) return pickNotes(body)
+                }
+            } finally {
+                c.disconnect()
+            }
+        } catch (ignored: Exception) {
+        }
+        return ""
+    }
+
     /** Blocking; call from a background thread. A second call replaces one that is still running. */
     fun check() {
         if (!enabled()) return
@@ -211,7 +261,8 @@ object Updater {
                 available = Info(
                     ver,
                     "https://github.com/$REPO/releases/tag/$tag",
-                    "https://github.com/$REPO/releases/download/$tag/MaxWorld-$ver.apk"
+                    "https://github.com/$REPO/releases/download/$tag/MaxWorld-$ver.apk",
+                    fetchNotes(tag)
                 )
                 lastResult = 3
             } else {

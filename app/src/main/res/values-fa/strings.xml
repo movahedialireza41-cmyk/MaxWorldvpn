@@ -384,7 +384,7 @@
     <string name="update_not_set">بررسی آپدیت هنوز تنظیم نشده</string>
     <string name="whatsnew_title">تازه‌های این نسخه</string>
     <string name="whatsnew_version_fmt">MaxWorld %1$s</string>
-    <string name="whatsnew_body">• کلید جدید در بخش درباره: روشن/خاموش کردن بررسی خودکار آپدیت\n• این نسخه برای تست دانلود و نصب آپدیت داخل برنامه ساخته شده است</string>
+    <string name="whatsnew_body">• وقتی نسخه جدید بیاید، هنگام باز کردن برنامه یک صفحه کامل با تازه‌های آن نسخه نشان داده می‌شود\n• در این صفحه می‌توانی همان لحظه آپدیت کنی یا «بعداً» را بزنی\n• کلید روشن/خاموش بررسی خودکار آپدیت در بخش درباره</string>
     <string name="whatsnew_ok">متوجه شدم</string>
     <string name="cip_title">اسکنر IP تمیز</string>
     <string name="cip_row_desc">پیدا کردن IP های سریع کلودفلر برای سرور انتخاب‌شده</string>
@@ -424,4 +424,8 @@
     <string name="update_status_fmt">در گیت‌هاب: %1$s · نصب‌شده: %2$s</string>
     <string name="upd_auto_title">بررسی آپدیت هنگام باز شدن</string>
     <string name="upd_auto_desc">هر بار برنامه باز می‌شود دنبال نسخه جدید بگرد</string>
+    <string name="upd_page_title">آپدیت جدید</string>
+    <string name="upd_page_from_fmt">نسخه شما: %1$s</string>
+    <string name="upd_now">همین حالا آپدیت کن</string>
+    <string name="upd_later">بعداً</string>
 </resources>

@@ -384,7 +384,7 @@
     <string name="update_not_set">Update checking is not set up yet</string>
     <string name="whatsnew_title">WHAT’S NEW</string>
     <string name="whatsnew_version_fmt">MaxWorld %1$s</string>
-    <string name="whatsnew_body">• New switch in About: turn the automatic update check on or off\n• This version exists to test downloading and installing an update inside the app</string>
+    <string name="whatsnew_body">• When a new version exists, a full page with what is new appears as you open the app\n• Update right there or tap "Later"\n• Switch to turn the automatic update check on or off in About</string>
     <string name="whatsnew_ok">Got it</string>
     <string name="cip_title">Clean IP scanner</string>
     <string name="cip_row_desc">Find fast Cloudflare IPs for the selected server</string>
@@ -424,4 +424,8 @@
     <string name="update_status_fmt">On GitHub: %1$s · Installed: %2$s</string>
     <string name="upd_auto_title">Check for updates on start</string>
     <string name="upd_auto_desc">Look for a new version each time the app opens</string>
+    <string name="upd_page_title">UPDATE AVAILABLE</string>
+    <string name="upd_page_from_fmt">You have %1$s</string>
+    <string name="upd_now">Update now</string>
+    <string name="upd_later">Later</string>
 </resources>

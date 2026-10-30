@@ -22,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -231,3 +232,72 @@ fun CleanIpDialog(onDismiss: () -> Unit) {
         PrimaryButton(stringResource(R.string.close), onDismiss, Modifier.padding(vertical = 14.dp))
     }
 }
+
+// ------------------------------------------------------------------ update prompt
+
+/** Full-screen page shown on opening the app when a newer version exists: notes, "Update now" and "Later". */
+@Composable
+fun UpdatePromptDialog(onLater: () -> Unit) {
+    val p = LocalPalette.current
+    val ctx = LocalContext.current
+    val info = Updater.available ?: return
+    FullScreenDialog(onLater) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Spacer(Modifier.height(40.dp))
+            Text(stringResource(R.string.upd_page_title), color = p.accent, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            Text(
+                stringResource(R.string.whatsnew_version_fmt, info.version),
+                color = p.text, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold
+            )
+            Text(
+                stringResource(R.string.upd_page_from_fmt, BuildConfigVersion.NAME),
+                color = p.muted, fontSize = 13.sp
+            )
+            Spacer(Modifier.height(18.dp))
+            GlassCard(Modifier.fillMaxWidth()) {
+                Text(
+                    info.notes.ifBlank { stringResource(R.string.update_desc) },
+                    color = p.text, fontSize = 15.sp, lineHeight = 26.sp
+                )
+            }
+        }
+        when (Updater.dlState) {
+            1 -> {
+                Text(
+                    stringResource(R.string.update_downloading_fmt, Updater.dlPercent),
+                    color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(8.dp))
+                Box(Modifier.fillMaxWidth().height(8.dp).androidxClip().background(p.track)) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth(Updater.dlPercent / 100f)
+                            .height(8.dp)
+                            .androidxClip()
+                            .background(Brush.horizontalGradient(listOf(p.accent, p.accent2)))
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                PrimaryButton(stringResource(R.string.upd_later), onLater, Modifier.padding(bottom = 16.dp), filled = false)
+            }
+            2 -> {
+                Text(stringResource(R.string.update_ready), color = p.ok, fontSize = 13.sp, modifier = Modifier.padding(bottom = 8.dp))
+                PrimaryButton(stringResource(R.string.update_install), { Updater.install(ctx) })
+                Spacer(Modifier.height(10.dp))
+                PrimaryButton(stringResource(R.string.upd_later), onLater, Modifier.padding(bottom = 16.dp), filled = false)
+            }
+            else -> {
+                if (Updater.dlState == 3) {
+                    Text(stringResource(R.string.update_dl_failed), color = p.warn, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
+                }
+                PrimaryButton(stringResource(R.string.upd_now), {
+                    Thread { Updater.download(ctx.applicationContext, info.apk) }.start()
+                })
+                Spacer(Modifier.height(10.dp))
+                PrimaryButton(stringResource(R.string.upd_later), onLater, Modifier.padding(bottom = 16.dp), filled = false)
+            }
+        }
+    }
+}
+
+private fun Modifier.androidxClip(): Modifier = this.clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
