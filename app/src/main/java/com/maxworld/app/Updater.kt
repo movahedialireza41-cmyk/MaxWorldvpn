@@ -122,53 +122,105 @@ object Updater {
         return false
     }
 
-    /** Blocking; call from a background thread. */
-    fun check() {
-        if (!enabled()) return
-        checking = true
+    /** What the last check saw: the newest version on GitHub, or the reason it failed. Shown in About. */
+    var remoteTag by mutableStateOf("")
+    var detail by mutableStateOf("")
+
+    @Volatile
+    private var ticket = 0
+
+    private fun proxy(): java.net.Proxy =
+        if (VpnState.state == ConnState.CONNECTED) {
+            java.net.Proxy(java.net.Proxy.Type.HTTP, java.net.InetSocketAddress("127.0.0.1", XrayConfig.HTTP_PORT))
+        } else {
+            java.net.Proxy.NO_PROXY
+        }
+
+    /** Newest release tag. First asks github.com for the "latest" redirect (no API limits), then the API. */
+    private fun fetchLatestTag(): String? {
         try {
-            val proxy = if (VpnState.state == ConnState.CONNECTED) {
-                java.net.Proxy(java.net.Proxy.Type.HTTP, java.net.InetSocketAddress("127.0.0.1", XrayConfig.HTTP_PORT))
-            } else {
-                java.net.Proxy.NO_PROXY
-            }
-            val conn = URL("https://api.github.com/repos/$REPO/releases/latest").openConnection(proxy) as HttpURLConnection
-            conn.connectTimeout = 12000
-            conn.readTimeout = 12000
-            conn.setRequestProperty("Accept", "application/vnd.github+json")
-            conn.setRequestProperty("User-Agent", "MaxWorld")
+            val c = URL("https://github.com/$REPO/releases/latest").openConnection(proxy()) as HttpURLConnection
+            c.instanceFollowRedirects = false
+            c.connectTimeout = 10000
+            c.readTimeout = 10000
+            c.setRequestProperty("User-Agent", "MaxWorld")
             try {
-                if (conn.responseCode != 200) {
-                    lastResult = 2
-                    return
+                val code = c.responseCode
+                val loc = c.getHeaderField("Location")
+                if (code in 300..399 && loc != null && loc.contains("/tag/")) {
+                    return java.net.URLDecoder.decode(loc.substringAfter("/tag/").substringBefore('?').trim(), "UTF-8")
                 }
-                val o = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
-                val tag = o.optString("tag_name")
-                var apk = ""
-                val assets = o.optJSONArray("assets")
-                if (assets != null) {
-                    for (i in 0 until assets.length()) {
-                        val u = assets.getJSONObject(i).optString("browser_download_url")
-                        if (u.endsWith(".apk", true)) {
-                            apk = u
-                            break
-                        }
-                    }
-                }
-                if (tag.isNotEmpty() && isNewer(tag, BuildConfigVersion.NAME)) {
-                    available = Info(tag.removePrefix("v"), o.optString("html_url"), apk)
-                    lastResult = 3
-                } else {
-                    available = null
-                    lastResult = 1
-                }
+                detail = "github.com HTTP $code"
             } finally {
-                conn.disconnect()
+                c.disconnect()
             }
         } catch (e: Exception) {
-            lastResult = 2
+            detail = e.javaClass.simpleName
+        }
+        try {
+            val c = URL("https://api.github.com/repos/$REPO/releases/latest").openConnection(proxy()) as HttpURLConnection
+            c.connectTimeout = 10000
+            c.readTimeout = 10000
+            c.setRequestProperty("Accept", "application/vnd.github+json")
+            c.setRequestProperty("User-Agent", "MaxWorld")
+            try {
+                val code = c.responseCode
+                if (code == 200) {
+                    val tag = JSONObject(c.inputStream.bufferedReader().use { it.readText() }).optString("tag_name")
+                    if (tag.isNotEmpty()) return tag
+                    detail = "no tag"
+                } else {
+                    detail = "API HTTP $code"
+                }
+            } finally {
+                c.disconnect()
+            }
+        } catch (e: Exception) {
+            detail = e.javaClass.simpleName
+        }
+        return null
+    }
+
+    /** Blocking; call from a background thread. A second call replaces one that is still running. */
+    fun check() {
+        if (!enabled()) return
+        val mine = ++ticket
+        checking = true
+        detail = ""
+        val pool = java.util.concurrent.Executors.newSingleThreadExecutor()
+        try {
+            val job = pool.submit(java.util.concurrent.Callable<String?> { fetchLatestTag() })
+            val tag = try {
+                job.get(25, java.util.concurrent.TimeUnit.SECONDS)
+            } catch (e: java.util.concurrent.TimeoutException) {
+                job.cancel(true)
+                detail = "timeout"
+                null
+            } catch (e: Exception) {
+                detail = e.javaClass.simpleName
+                null
+            }
+            if (mine != ticket) return
+            if (tag == null) {
+                lastResult = 2
+                return
+            }
+            remoteTag = tag
+            if (isNewer(tag, BuildConfigVersion.NAME)) {
+                val ver = tag.removePrefix("v").removePrefix("V")
+                available = Info(
+                    ver,
+                    "https://github.com/$REPO/releases/tag/$tag",
+                    "https://github.com/$REPO/releases/download/$tag/MaxWorld-$ver.apk"
+                )
+                lastResult = 3
+            } else {
+                available = null
+                lastResult = 1
+            }
         } finally {
-            checking = false
+            pool.shutdownNow()
+            if (mine == ticket) checking = false
         }
     }
 }

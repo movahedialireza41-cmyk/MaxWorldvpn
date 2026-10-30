@@ -243,10 +243,18 @@ fun UpdateCheckRow() {
         return
     }
     Chip(if (Updater.checking) stringResource(R.string.shield_updating) else stringResource(R.string.update_check), Updater.checking) {
-        if (!Updater.checking) scope.launch(Dispatchers.IO) { Updater.check() }
+        scope.launch(Dispatchers.IO) { Updater.check() }
     }
+    Spacer(Modifier.height(6.dp))
     when (Updater.lastResult) {
-        1 -> Text(stringResource(R.string.update_latest), color = p.ok, fontSize = 12.sp,)
+        1 -> Text(stringResource(R.string.update_latest), color = p.ok, fontSize = 12.sp)
         2 -> Text(stringResource(R.string.update_failed), color = p.warn, fontSize = 12.sp)
+        3 -> Text(stringResource(R.string.update_found_hint), color = p.accent, fontSize = 12.sp)
+    }
+    if (Updater.lastResult == 2 && Updater.detail.isNotEmpty()) {
+        Text(Updater.detail, color = p.muted, fontSize = 11.sp)
+    }
+    if (Updater.remoteTag.isNotEmpty()) {
+        Text(stringResource(R.string.update_status_fmt, Updater.remoteTag, BuildConfigVersion.NAME), color = p.muted, fontSize = 11.sp)
     }
 }
