@@ -44,6 +44,10 @@ object Prefs {
     fun subAlerts(c: Context): Boolean = p(c).getBoolean("sub_alerts", true)
     fun setSubAlerts(c: Context, v: Boolean) = p(c).edit().putBoolean("sub_alerts", v).apply()
 
+    /** Look for a new version every time the app starts. */
+    fun updateCheck(c: Context): Boolean = p(c).getBoolean("update_check", true)
+    fun setUpdateCheck(c: Context, v: Boolean) = p(c).edit().putBoolean("update_check", v).apply()
+
     /** Hours between automatic subscription refreshes; 0 = off. */
     fun subHours(c: Context): Int = p(c).getInt("sub_hours", 24)
     fun setSubHours(c: Context, v: Int) = p(c).edit().putInt("sub_hours", v).apply()

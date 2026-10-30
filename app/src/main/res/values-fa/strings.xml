@@ -384,7 +384,7 @@
     <string name="update_not_set">بررسی آپدیت هنوز تنظیم نشده</string>
     <string name="whatsnew_title">تازه‌های این نسخه</string>
     <string name="whatsnew_version_fmt">MaxWorld %1$s</string>
-    <string name="whatsnew_body">• بررسی نسخه جدید دقیق‌تر و مقاوم‌تر شد و وضعیتش (نسخه گیت‌هاب و نسخه نصب‌شده) نشان داده می‌شود\n• کپی کردن لینک اشتراک (در پنجره اشتراک‌ها)\n• لمس نمایشگر حجم در صفحه اصلی، آن را همین حالا به‌روز می‌کند\n• دکمه «همه نسخه‌ها» و «اشتراک‌گذاری برنامه» در بخش درباره\n• صفر کردن مصرف سرورها (تنظیمات ← ابزارها)</string>
+    <string name="whatsnew_body">• کلید جدید در بخش درباره: روشن/خاموش کردن بررسی خودکار آپدیت\n• این نسخه برای تست دانلود و نصب آپدیت داخل برنامه ساخته شده است</string>
     <string name="whatsnew_ok">متوجه شدم</string>
     <string name="cip_title">اسکنر IP تمیز</string>
     <string name="cip_row_desc">پیدا کردن IP های سریع کلودفلر برای سرور انتخاب‌شده</string>
@@ -422,4 +422,6 @@
     <string name="srv_usage_reset_done">انجام شد</string>
     <string name="update_found_hint">نسخه جدید موجود است. کارت آن بالای همین صفحه است.</string>
     <string name="update_status_fmt">در گیت‌هاب: %1$s · نصب‌شده: %2$s</string>
+    <string name="upd_auto_title">بررسی آپدیت هنگام باز شدن</string>
+    <string name="upd_auto_desc">هر بار برنامه باز می‌شود دنبال نسخه جدید بگرد</string>
 </resources>

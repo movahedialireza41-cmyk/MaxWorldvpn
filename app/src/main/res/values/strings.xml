@@ -384,7 +384,7 @@
     <string name="update_not_set">Update checking is not set up yet</string>
     <string name="whatsnew_title">WHAT’S NEW</string>
     <string name="whatsnew_version_fmt">MaxWorld %1$s</string>
-    <string name="whatsnew_body">• The update check is more reliable and shows its status (GitHub version and installed version)\n• Copy a subscription link (in the subscriptions window)\n• Tap the data gauge on the home screen to refresh it now\n• "All versions" and "Share app" buttons in About\n• Reset per-server usage (Settings → Tools)</string>
+    <string name="whatsnew_body">• New switch in About: turn the automatic update check on or off\n• This version exists to test downloading and installing an update inside the app</string>
     <string name="whatsnew_ok">Got it</string>
     <string name="cip_title">Clean IP scanner</string>
     <string name="cip_row_desc">Find fast Cloudflare IPs for the selected server</string>
@@ -422,4 +422,6 @@
     <string name="srv_usage_reset_done">Done</string>
     <string name="update_found_hint">A new version is available. See the card at the top of Settings.</string>
     <string name="update_status_fmt">On GitHub: %1$s · Installed: %2$s</string>
+    <string name="upd_auto_title">Check for updates on start</string>
+    <string name="upd_auto_desc">Look for a new version each time the app opens</string>
 </resources>

@@ -58,6 +58,7 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
     var speedMb by remember { mutableStateOf(Prefs.speedMb(ctx)) }
     var subHours by remember { mutableStateOf(Prefs.subHours(ctx)) }
     var subAlerts by remember { mutableStateOf(Prefs.subAlerts(ctx)) }
+    var updCheck by remember { mutableStateOf(Prefs.updateCheck(ctx)) }
     var autoMode by remember { mutableStateOf(Prefs.autoMode(ctx)) }
     var lockOn by remember { mutableStateOf(AppLock.enabled(ctx)) }
     var bioOn by remember { mutableStateOf(AppLock.bioEnabled(ctx)) }
@@ -322,6 +323,11 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
                 Text(stringResource(R.string.version_fmt, BuildConfigVersion.NAME), color = p.muted, fontSize = 13.sp)
                 Text(stringResource(R.string.core_fmt, coreVersion), color = p.muted, fontSize = 13.sp)
                 UpdateCheckRow()
+                Spacer(Modifier.height(10.dp))
+                SwitchRow(R.string.upd_auto_title, R.string.upd_auto_desc, updCheck) {
+                    updCheck = it
+                    Prefs.setUpdateCheck(ctx, it)
+                }
                 if (Updater.enabled()) {
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -366,7 +372,7 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
 
 /** App version, kept here so no BuildConfig generation is needed. */
 object BuildConfigVersion {
-    const val NAME = "1.3.1"
+    const val NAME = "1.3.2"
 }
 
 @Composable

@@ -16,7 +16,7 @@ class MaxWorldApp : Application() {
         Thread {
             Geo.installBundled(this)
             Geo.autoUpdate(this)
-            Updater.check()
+            if (Prefs.updateCheck(this)) Updater.check()
         }.start()
         try {
             // Folder where geoip.dat / geosite.dat will live in a later stage.

@@ -12,8 +12,8 @@ android {
         applicationId = "com.maxworld.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 14
-        versionName = "1.3.1"
+        versionCode = 15
+        versionName = "1.3.2"
 
         // The Xray core and the tunnel library are built for these two ABIs only.
         ndk {
