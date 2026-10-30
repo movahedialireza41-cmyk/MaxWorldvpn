@@ -384,7 +384,7 @@
     <string name="update_not_set">بررسی آپدیت هنوز تنظیم نشده</string>
     <string name="whatsnew_title">تازه‌های این نسخه</string>
     <string name="whatsnew_version_fmt">MaxWorld %1$s</string>
-    <string name="whatsnew_body">• سپر: مسدود کردن تبلیغ و ردیاب با لیست‌های دلخواه (تنظیمات ← سپر)\n• لیست مجاز برای سایت‌هایی که نباید مسدود شوند\n• کارت آپدیت: وقتی نسخه جدید بیاید خبرت می‌کند و داخل خود برنامه با درصد پیشرفت دانلودش می‌کند\n• اسکنر IP تمیز: IP های سریع کلودفلر را برای سرور تو پیدا می‌کند (تنظیمات ← ابزارها)\n• نمایشگر حجم در صفحه اصلی: حجم و روز باقی‌مانده، مستقیم از اطلاعات ارائه‌دهنده\n• مصرف داده از هر سرور\n• انتخاب زمان به‌روزرسانی خودکار اشتراک‌ها (تنظیمات)\n• هشدار وقتی حجم رو به اتمام است یا اشتراک نزدیک انقضاست\n• همین صفحه که بعد از هر آپدیت یک بار نشان داده می‌شود</string>
+    <string name="whatsnew_body">• کپی کردن لینک اشتراک (در پنجره اشتراک‌ها)\n• لمس نمایشگر حجم در صفحه اصلی، آن را همین حالا به‌روز می‌کند\n• دکمه «همه نسخه‌ها» و «اشتراک‌گذاری برنامه» در بخش درباره\n• صفر کردن مصرف سرورها (تنظیمات ← ابزارها)\n• این نسخه برای تست آپدیت داخل برنامه ساخته شده</string>
     <string name="whatsnew_ok">متوجه شدم</string>
     <string name="cip_title">اسکنر IP تمیز</string>
     <string name="cip_row_desc">پیدا کردن IP های سریع کلودفلر برای سرور انتخاب‌شده</string>
@@ -413,4 +413,11 @@
     <string name="update_ready">دانلود تمام شد. برای آپدیت روی نصب بزن.</string>
     <string name="update_install">نصب</string>
     <string name="update_dl_failed">دانلود ناموفق بود. اتصال را چک کن و دوباره امتحان کن.</string>
+    <string name="sub_copy">کپی لینک</string>
+    <string name="sub_copied">لینک اشتراک کپی شد</string>
+    <string name="about_releases">همه نسخه‌ها</string>
+    <string name="about_share">اشتراک‌گذاری برنامه</string>
+    <string name="srv_usage_reset">صفر کردن مصرف سرورها</string>
+    <string name="srv_usage_reset_desc">شمارش مصرف هر سرور را از صفر شروع کن</string>
+    <string name="srv_usage_reset_done">انجام شد</string>
 </resources>

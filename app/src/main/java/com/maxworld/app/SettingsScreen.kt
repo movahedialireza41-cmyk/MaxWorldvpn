@@ -287,6 +287,11 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
                 Spacer(Modifier.height(14.dp))
                 ActionRow(R.string.cip_title, R.string.cip_row_desc) { showCleanIp = true }
                 Spacer(Modifier.height(14.dp))
+                ActionRow(R.string.srv_usage_reset, R.string.srv_usage_reset_desc) {
+                    Usage.clearServers()
+                    Toast.makeText(ctx, R.string.srv_usage_reset_done, Toast.LENGTH_SHORT).show()
+                }
+                Spacer(Modifier.height(14.dp))
                 ActionRow(R.string.backup_export, R.string.backup_export_desc) { exportLauncher.launch("maxworld-backup.json") }
                 Spacer(Modifier.height(14.dp))
                 ActionRow(R.string.backup_import, R.string.backup_import_desc) { importLauncher.launch(arrayOf("*/*")) }
@@ -317,6 +322,28 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
                 Text(stringResource(R.string.version_fmt, BuildConfigVersion.NAME), color = p.muted, fontSize = 13.sp)
                 Text(stringResource(R.string.core_fmt, coreVersion), color = p.muted, fontSize = 13.sp)
                 UpdateCheckRow()
+                if (Updater.enabled()) {
+                    Spacer(Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Chip(stringResource(R.string.about_releases), false) {
+                            try {
+                                ctx.startActivity(
+                                    Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/" + Updater.REPO + "/releases"))
+                                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                )
+                            } catch (ignored: Exception) {
+                            }
+                        }
+                        Chip(stringResource(R.string.about_share), false) {
+                            try {
+                                val send = Intent(Intent.ACTION_SEND).setType("text/plain")
+                                    .putExtra(Intent.EXTRA_TEXT, "MaxWorld\nhttps://github.com/" + Updater.REPO + "/releases/latest")
+                                ctx.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            } catch (ignored: Exception) {
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -339,7 +366,7 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
 
 /** App version, kept here so no BuildConfig generation is needed. */
 object BuildConfigVersion {
-    const val NAME = "1.2.0"
+    const val NAME = "1.3.0"
 }
 
 @Composable

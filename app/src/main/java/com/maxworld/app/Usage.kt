@@ -104,6 +104,13 @@ object Usage {
         }
     }
 
+    /** Forgets the per-server totals (the daily chart is kept). */
+    @Synchronized
+    fun clearServers() {
+        pendingSrv.clear()
+        prefs()?.edit()?.remove("servers")?.apply()
+    }
+
     class Day(val label: String, val down: Long, val up: Long)
 
     /** The last [n] days, oldest first; days without use have zeros. */

@@ -1,6 +1,8 @@
 package com.maxworld.app
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,7 +52,13 @@ fun DataTank(cfg: VpnConfig?) {
     val cells = 20
     val lit = if (hasData) Math.ceil(frac * cells.toDouble()).toInt().coerceIn(if (left > 0) 1 else 0, cells) else cells
 
-    GlassCard(Modifier.fillMaxWidth().fadeSlideIn(160)) {
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    GlassCard(
+        Modifier
+            .fillMaxWidth()
+            .fadeSlideIn(160)
+            .clickable { scope.launch { try { Subs.refresh(sub) } catch (ignored: Exception) {} } }
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 if (hasData) {

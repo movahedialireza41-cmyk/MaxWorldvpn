@@ -384,7 +384,7 @@
     <string name="update_not_set">Update checking is not set up yet</string>
     <string name="whatsnew_title">WHAT’S NEW</string>
     <string name="whatsnew_version_fmt">MaxWorld %1$s</string>
-    <string name="whatsnew_body">• Shield: block ads and trackers with lists you choose (Settings → Shield)\n• Allow list for sites that must never be blocked\n• Update card: tells you when a new version is out and downloads it inside the app with a progress percentage\n• Clean IP scanner: finds fast Cloudflare IPs for your server (Settings → Tools)\n• Data gauge on the home screen: data and days left, read from your provider\n• Data used through each server\n• Choose how often subscriptions refresh (Settings)\n• Alerts when data is nearly gone or a subscription is about to expire\n• This page, shown once after every update</string>
+    <string name="whatsnew_body">• Copy a subscription link (in the subscriptions window)\n• Tap the data gauge on the home screen to refresh it now\n• "All versions" and "Share app" buttons in About\n• Reset per-server usage (Settings → Tools)\n• This version exists to test the in-app update</string>
     <string name="whatsnew_ok">Got it</string>
     <string name="cip_title">Clean IP scanner</string>
     <string name="cip_row_desc">Find fast Cloudflare IPs for the selected server</string>
@@ -413,4 +413,11 @@
     <string name="update_ready">Download finished. Tap Install to update.</string>
     <string name="update_install">Install</string>
     <string name="update_dl_failed">Download failed. Check your connection and try again.</string>
+    <string name="sub_copy">Copy link</string>
+    <string name="sub_copied">Subscription link copied</string>
+    <string name="about_releases">All versions</string>
+    <string name="about_share">Share app</string>
+    <string name="srv_usage_reset">Reset per-server usage</string>
+    <string name="srv_usage_reset_desc">Start counting the data used through each server from zero</string>
+    <string name="srv_usage_reset_done">Done</string>
 </resources>

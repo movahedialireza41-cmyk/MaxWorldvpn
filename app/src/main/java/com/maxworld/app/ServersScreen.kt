@@ -671,6 +671,14 @@ private fun SubsDialog(prefillUrl: String, onDismiss: () -> Unit) {
                             } else {
                                 ActionText(stringResource(R.string.sub_update), p.accent) { run(s) }
                             }
+                            ActionText(stringResource(R.string.sub_copy), p.muted) {
+                                try {
+                                    (ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                                        .setPrimaryClip(ClipData.newPlainText("sub", s.url))
+                                    Toast.makeText(ctx, R.string.sub_copied, Toast.LENGTH_SHORT).show()
+                                } catch (ignored: Exception) {
+                                }
+                            }
                             ActionText(stringResource(R.string.delete), p.danger) { Subs.remove(s.id) }
                         }
                     }
