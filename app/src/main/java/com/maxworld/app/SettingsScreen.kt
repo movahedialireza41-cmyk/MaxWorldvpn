@@ -68,6 +68,8 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
     var showLogs by remember { mutableStateOf(false) }
     var showDoctor by remember { mutableStateOf(false) }
     var showCleanIp by remember { mutableStateOf(false) }
+    var showLeak by remember { mutableStateOf(false) }
+    var showHist by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) {
@@ -146,6 +148,20 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
                         color = p.muted, fontSize = 28.sp
                     )
                 }
+            }
+
+            // look: the new Neo design or the Classic one
+            SectionTitle(R.string.design_title)
+            GlassCard(Modifier.fillMaxWidth().fadeSlideIn(90)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Chip(stringResource(R.string.design_neo), Design.neo) { Design.set(ctx, true) }
+                    Chip(stringResource(R.string.design_classic), !Design.neo) { Design.set(ctx, false) }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    stringResource(if (Design.neo) R.string.design_neo_desc else R.string.design_classic_desc),
+                    color = p.muted, fontSize = 12.sp
+                )
             }
 
             // routing: apps without VPN, Iran direct, ad blocking (right under the theme)
@@ -246,6 +262,9 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
                 Text(stringResource(R.string.auto_desc), color = p.muted, fontSize = 12.sp)
             }
 
+            TrustedWifiSection()
+            ExtrasSection()
+
             // ------------------------------------------------------------ security
             SectionTitle(R.string.security_title)
             GlassCard(Modifier.fillMaxWidth().fadeSlideIn(170)) {
@@ -287,6 +306,10 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
                 ActionRow(R.string.logs_title, R.string.logs_desc) { showLogs = true }
                 Spacer(Modifier.height(14.dp))
                 ActionRow(R.string.cip_title, R.string.cip_row_desc) { showCleanIp = true }
+                Spacer(Modifier.height(14.dp))
+                ActionRow(R.string.leak_title, R.string.leak_row_desc) { showLeak = true }
+                Spacer(Modifier.height(14.dp))
+                ActionRow(R.string.hist_title, R.string.hist_row_desc) { showHist = true }
                 Spacer(Modifier.height(14.dp))
                 ActionRow(R.string.srv_usage_reset, R.string.srv_usage_reset_desc) {
                     Usage.clearServers()
@@ -368,25 +391,48 @@ fun SettingsScreen(themeId: String, onTheme: (String) -> Unit) {
     if (showLogs) LogsDialog(onDismiss = { showLogs = false })
     if (showDoctor) DoctorDialog(onDismiss = { showDoctor = false })
     if (showCleanIp) CleanIpDialog(onDismiss = { showCleanIp = false })
+    if (showLeak) LeakDialog(onDismiss = { showLeak = false })
+    if (showHist) HistoryDialog(onDismiss = { showHist = false })
 }
 
 /** App version, kept here so no BuildConfig generation is needed. */
 object BuildConfigVersion {
-    const val NAME = "1.3.3"
+    const val NAME = "1.5.0"
 }
 
 @Composable
 fun SectionTitle(res: Int) {
     val p = LocalPalette.current
     Spacer(Modifier.height(22.dp))
-    Text(
-        stringResource(res),
-        color = p.accent,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 1.sp,
-        modifier = Modifier.padding(bottom = 10.dp, start = 4.dp)
-    )
+    if (Design.neo) {
+        Row(Modifier.padding(bottom = 10.dp, start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(width = 4.dp, height = 16.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Brush.verticalGradient(listOf(p.accent, p.accent2)))
+            )
+            Spacer(Modifier.size(8.dp))
+            Text(
+                stringResource(res),
+                style = androidx.compose.ui.text.TextStyle(
+                    brush = Brush.horizontalGradient(listOf(p.accent, p.accent2)),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp
+                )
+            )
+        }
+    } else {
+        Text(
+            stringResource(res),
+            color = p.accent,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            modifier = Modifier.padding(bottom = 10.dp, start = 4.dp)
+        )
+    }
 }
 
 @Composable

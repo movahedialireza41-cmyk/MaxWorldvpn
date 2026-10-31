@@ -16,10 +16,12 @@ import java.net.URL
 object Shield {
     class Source(val id: String, val name: String, val url: String, var enabled: Boolean, var count: Int)
 
-    private const val MAX_DOMAINS = 50_000
+    private const val MAX_DOMAINS = 120_000
     private val PRESETS = listOf(
         Triple("stevenblack", "StevenBlack Unified", "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"),
         Triple("adguard", "AdGuard DNS filter", "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt"),
+        Triple("hagezilight", "HaGeZi Light", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/light.txt"),
+        Triple("hagezipro", "HaGeZi Pro", "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/hosts/pro.txt"),
         Triple("peterlowe", "Peter Lowe ad servers", "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&showintro=0&mimetype=plaintext")
     )
     private val domainRegex = Regex("^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$")
@@ -30,6 +32,15 @@ object Shield {
 
     var enabled = false
     var builtin = true // also use the geosite ad list when the geo files are present
+    var googleAds = true // block Google / YouTube ad servers
+    var blockQuic = true // block QUIC (UDP 443) so apps fall back to TCP, where the site name can be seen
+
+    /** Ad servers of Google and YouTube; they are mostly already in the lists, this makes sure of them. */
+    private val GOOGLE_ADS = listOf(
+        "doubleclick.net", "googlesyndication.com", "googleadservices.com", "2mdn.net",
+        "adservice.google.com", "ads.youtube.com", "googleads.g.doubleclick.net", "pagead2.googlesyndication.com",
+        "admob.com", "adsense.google.com", "ad.doubleclick.net", "pubads.g.doubleclick.net"
+    )
     var allow = ""
     val sources = ArrayList<Source>()
 
@@ -41,6 +52,8 @@ object Shield {
         prefs = p
         enabled = p.getBoolean("enabled", false)
         builtin = p.getBoolean("builtin", true)
+        googleAds = p.getBoolean("googleAds", true)
+        blockQuic = p.getBoolean("blockQuic", true)
         allow = p.getString("allow", "") ?: ""
         sources.clear()
         try {
@@ -61,6 +74,8 @@ object Shield {
         prefs?.edit()
             ?.putBoolean("enabled", enabled)
             ?.putBoolean("builtin", builtin)
+            ?.putBoolean("googleAds", googleAds)
+            ?.putBoolean("blockQuic", blockQuic)
             ?.putString("allow", allow)
             ?.putString("sources", arr.toString())
             ?.apply()
@@ -126,7 +141,7 @@ object Shield {
                 d = if (tokens.size >= 2 && (tokens[0] == "0.0.0.0" || tokens[0] == "127.0.0.1" || tokens[0] == "::1" || tokens[0] == "::")) tokens[1]
                 else if (tokens.size == 1) tokens[0] else continue
             }
-            d = d.lowercase().trim('.')
+            d = d.lowercase().removePrefix("*.").trim('.')
             if (d == "localhost" || ipRegex.matches(d) || !domainRegex.matches(d) || d.length > 120) continue
             out.add(d)
             if (out.size >= MAX_DOMAINS) break
@@ -153,11 +168,17 @@ object Shield {
     fun rules(isBalance: Boolean): List<JSONObject> {
         if (!enabled) return emptyList()
         val out = ArrayList<JSONObject>()
+        if (blockQuic) {
+            out.add(JSONObject().put("type", "field").put("network", "udp").put("port", "443").put("outboundTag", "block"))
+        }
         val allowed = allowDomains()
         if (allowed.isNotEmpty()) {
             val r = JSONObject().put("type", "field").put("domain", JSONArray(allowed.map { "domain:$it" }))
             if (isBalance) r.put("balancerTag", "balancer") else r.put("outboundTag", "proxy")
             out.add(r)
+        }
+        if (googleAds) {
+            out.add(JSONObject().put("type", "field").put("domain", JSONArray(GOOGLE_ADS.map { "domain:$it" })).put("outboundTag", "block"))
         }
         val blocked = loadDomains()
         if (blocked.isNotEmpty()) {

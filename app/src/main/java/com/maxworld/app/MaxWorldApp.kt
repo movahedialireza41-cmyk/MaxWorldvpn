@@ -11,6 +11,7 @@ class MaxWorldApp : Application() {
         Subs.init(this)
         Adv.init(this)
         Shield.init(this)
+        Design.init(this)
         Usage.init(this)
         AutoConnect.apply(this)
         Thread {

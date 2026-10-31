@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -90,13 +91,24 @@ fun DataTank(cfg: VpnConfig?) {
         if (hasData) {
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                // cells fill up one after another when the card appears or the amount changes
+                val shownLit by androidx.compose.animation.core.animateFloatAsState(
+                    lit.toFloat(), androidx.compose.animation.core.tween(1100, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                    label = "tankFill"
+                )
                 repeat(cells) { i ->
+                    val on = i < Math.round(shownLit)
+                    val cellColor = when {
+                        !on -> p.track
+                        Design.neo && color == p.ok -> androidx.compose.ui.graphics.lerp(p.accent, p.accent2, i / (cells - 1f))
+                        else -> color
+                    }
                     Box(
                         Modifier
                             .weight(1f)
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(if (i < lit) color else p.track)
+                            .height(if (Design.neo) 10.dp else 8.dp)
+                            .clip(RoundedCornerShape(if (Design.neo) 5.dp else 3.dp))
+                            .background(cellColor)
                     )
                 }
             }

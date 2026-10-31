@@ -22,6 +22,7 @@ object Usage {
 
     fun init(c: Context) {
         ctx = c.applicationContext
+        History.init(c)
     }
 
     private fun prefs() = ctx?.getSharedPreferences("usage", Context.MODE_PRIVATE)
@@ -48,6 +49,7 @@ object Usage {
         val du = if (up >= lastUp) up - lastUp else up
         lastDown = down
         lastUp = up
+        History.add(dd, du)
         pendingDown += dd
         pendingUp += du
         val sid = ConfigStore.selectedId

@@ -100,6 +100,11 @@ fun ShieldSection() {
             Text(stringResource(R.string.geo_missing), color = p.warn, fontSize = 12.sp)
         }
 
+        Spacer(Modifier.height(14.dp))
+        SwitchRow(R.string.shield_google_title, R.string.shield_google_desc, Shield.googleAds) { on -> changed { Shield.googleAds = on } }
+        Spacer(Modifier.height(14.dp))
+        SwitchRow(R.string.shield_quic_title, R.string.shield_quic_desc, Shield.blockQuic) { on -> changed { Shield.blockQuic = on } }
+
         Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.shield_lists), color = p.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         Text(stringResource(R.string.shield_domains_fmt, Shield.totalDomains()), color = p.accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)

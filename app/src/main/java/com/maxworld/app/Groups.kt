@@ -59,7 +59,7 @@ fun GroupDialog(initial: VpnConfig?, onDismiss: () -> Unit, onSave: (VpnConfig) 
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
+                .screenBackdrop()
         ) {
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
                 Text(

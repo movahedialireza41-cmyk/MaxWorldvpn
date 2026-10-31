@@ -211,7 +211,7 @@ object XrayConfig {
             inbounds.put(
                 obj(
                     "tag" to "socks",
-                    "listen" to "127.0.0.1",
+                    "listen" to (if (Adv.shareLan) "0.0.0.0" else "127.0.0.1"),
                     "port" to SOCKS_PORT,
                     "protocol" to "socks",
                     "settings" to obj("auth" to "noauth", "udp" to true, "userLevel" to 8),
@@ -221,7 +221,7 @@ object XrayConfig {
             inbounds.put(
                 obj(
                     "tag" to "http",
-                    "listen" to "127.0.0.1",
+                    "listen" to (if (Adv.shareLan) "0.0.0.0" else "127.0.0.1"),
                     "port" to HTTP_PORT,
                     "protocol" to "http",
                     "settings" to JSONObject(),

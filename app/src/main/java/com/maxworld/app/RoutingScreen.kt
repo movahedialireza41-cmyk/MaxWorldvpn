@@ -130,6 +130,20 @@ fun RoutingSection() {
                     )
                 }
             }
+            Spacer(Modifier.height(10.dp))
+            run {
+                val ctxI = LocalContext.current
+                Chip(stringResource(R.string.iran_apps_button), false) {
+                    val n = IranApps.apply(ctxI)
+                    tick++
+                    android.widget.Toast.makeText(
+                        ctxI,
+                        if (n > 0) ctxI.getString(R.string.iran_apps_added_fmt, n) else ctxI.getString(R.string.iran_apps_none),
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+                Text(stringResource(R.string.iran_apps_hint), color = p.muted, fontSize = 11.sp)
+            }
             Spacer(Modifier.height(12.dp))
 
             // ---------------------------------------- Iranian sites without VPN
@@ -372,7 +386,7 @@ private fun AppsDialog(onDismiss: () -> Unit, onChanged: () -> Unit) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
+                .screenBackdrop()
         ) {
             Column(Modifier.fillMaxSize().padding(horizontal = 18.dp)) {
                 Row(
@@ -476,7 +490,7 @@ private fun AppSearch(value: String, onChange: (String) -> Unit) {
             .fillMaxWidth()
             .clip(shape)
             .background(p.card)
-            .border(1.dp, p.cardBorder, shape)
+            .cardBorder(shape)
             .padding(horizontal = 22.dp, vertical = 20.dp)
     ) {
         if (value.isEmpty()) {
@@ -499,13 +513,14 @@ private fun AppSearch(value: String, onChange: (String) -> Unit) {
 private fun RulesDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
     val p = LocalPalette.current
     var text by remember { mutableStateOf(Adv.customRules) }
+    var visual by remember { mutableStateOf(true) }
     val shape = RoundedCornerShape(16.dp)
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
+                .screenBackdrop()
         ) {
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
                 Text(
@@ -517,13 +532,23 @@ private fun RulesDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
                 )
                 Text(stringResource(R.string.route_custom_hint), color = p.muted, fontSize = 12.sp)
                 Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Chip(stringResource(R.string.rules_visual), visual) { visual = true }
+                    Chip(stringResource(R.string.rules_text), !visual) { visual = false }
+                }
+                Spacer(Modifier.height(10.dp))
+                if (visual) {
+                    Column(Modifier.fillMaxWidth().weight(1f)) {
+                        VisualRules(text) { text = it }
+                    }
+                } else {
                 Box(
                     Modifier
                         .fillMaxWidth()
                         .weight(1f)
                         .clip(shape)
                         .background(p.card)
-                        .border(1.dp, p.cardBorder, shape)
+                        .cardBorder(shape)
                         .padding(14.dp)
                 ) {
                     BasicTextField(
@@ -537,6 +562,7 @@ private fun RulesDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
                             .verticalScroll(rememberScrollState())
                     )
                 }
+                }
                 Row(
                     Modifier.fillMaxWidth().padding(vertical = 14.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -544,6 +570,70 @@ private fun RulesDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
                     PrimaryButton(stringResource(R.string.cancel), onDismiss, modifier = Modifier.weight(1f), filled = false)
                     PrimaryButton(stringResource(R.string.save), { onSave(text) }, modifier = Modifier.weight(1f))
                 }
+            }
+        }
+    }
+}
+
+/** Rules as rows: tap the action to cycle Direct / Proxy / Block, add by typing a site or IP. */
+@Composable
+private fun VisualRules(text: String, onText: (String) -> Unit) {
+    val p = LocalPalette.current
+    val actions = listOf("direct", "proxy", "block")
+    val lines = text.lines()
+    var value by remember { mutableStateOf("") }
+    var action by remember { mutableStateOf("direct") }
+    val rows = lines.mapIndexedNotNull { i, raw ->
+        val l = raw.trim()
+        if (l.isEmpty() || l.startsWith("#")) return@mapIndexedNotNull null
+        val a = l.substringBefore(':').lowercase()
+        val v = l.substringAfter(':', "").trim()
+        if (a in actions && v.isNotEmpty()) Triple(i, a, v) else null
+    }
+
+    fun label(a: String) = when (a) {
+        "direct" -> R.string.rules_direct
+        "proxy" -> R.string.rules_proxy
+        else -> R.string.rules_block
+    }
+
+    fun replaceLine(i: Int, newLine: String?) {
+        val out = lines.toMutableList()
+        if (newLine == null) out.removeAt(i) else out[i] = newLine
+        onText(out.joinToString("\n"))
+    }
+
+    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            actions.forEach { a -> Chip(stringResource(label(a)), action == a) { action = a } }
+        }
+        Spacer(Modifier.height(8.dp))
+        Field(stringResource(R.string.rules_value_hint), value, { value = it })
+        Spacer(Modifier.height(8.dp))
+        Chip(stringResource(R.string.rules_add), false) {
+            val v = value.trim()
+            if (v.isNotEmpty()) {
+                val ipLike = Regex("^[0-9a-fA-F:.]+(/\\d+)?$").matches(v)
+                val norm = if (v.contains(':') && !ipLike || ipLike) v else "domain:" + v
+                val base = text.trimEnd('\n')
+                onText((if (base.isEmpty()) "" else base + "\n") + action + ":" + norm)
+                value = ""
+            }
+        }
+        Spacer(Modifier.height(14.dp))
+        if (rows.isEmpty()) Text(stringResource(R.string.rules_empty), color = p.muted, fontSize = 13.sp)
+        rows.forEach { (i, a, v) ->
+            Row(
+                Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Chip(stringResource(label(a)), true) {
+                    val next = actions[(actions.indexOf(a) + 1) % actions.size]
+                    replaceLine(i, "$next:$v")
+                }
+                Text(v, color = p.text, fontSize = 14.sp, maxLines = 1, modifier = Modifier.weight(1f))
+                Chip(stringResource(R.string.delete), false) { replaceLine(i, null) }
             }
         }
     }

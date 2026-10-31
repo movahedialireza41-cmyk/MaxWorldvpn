@@ -63,7 +63,7 @@ MaxWorld یک برنامه VPN برای اندروید است که با هسته
 - ویجت، کاشی تنظیمات سریع و اتصال خودکار
 
 **ظاهر**
-- چندین تم، تم شخصی‌سازی‌شده، انیمیشن‌های روان
+- طراحی جدید «نئو» (با امکان برگشت به «کلاسیک»)، چندین تم، تم شخصی‌سازی‌شده، انیمیشن‌های روان
 - فارسی (راست‌به‌چپ) و انگلیسی
 - نمایش سرعت زنده در اعلان
 
@@ -120,7 +120,7 @@ MaxWorld is an Android VPN client built on the **Xray** core. It aims to make co
 - **Shield:** ad and tracker blocking with ready-made or your own lists and an allow list, working across all apps (ads inside YouTube videos cannot be blocked by any VPN)
 - **Routing and privacy:** split tunneling, Iran-direct routing, custom DNS and DNS over HTTPS, kill switch, app lock with PIN and fingerprint
 - **Tools:** clean-IP scanner for Cloudflare-fronted servers, built-in troubleshooter, logs, backup and restore, exit-IP globe, widget and quick-settings tile
-- **Look:** several themes plus a custom one, smooth animations, Persian (RTL) and English
+- **Look:** the new "Neo" design (with a switch back to "Classic"), several themes plus a custom one, smooth animations, Persian (RTL) and English
 - **In-app updates:** a card appears when a new release exists; download with a progress percentage and install without opening a browser
 
 ### Install

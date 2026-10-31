@@ -140,7 +140,7 @@ private fun PinLayout(
     Box(
         Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
+            .screenBackdrop()
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
@@ -198,7 +198,7 @@ private fun Key(label: String, onClick: () -> Unit) {
             .size(72.dp)
             .clip(CircleShape)
             .background(p.card)
-            .border(1.dp, p.cardBorder, CircleShape)
+            .cardBorder(CircleShape)
             .clickable {
                 haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 onClick()

@@ -48,6 +48,10 @@ object Prefs {
     fun updateCheck(c: Context): Boolean = p(c).getBoolean("update_check", true)
     fun setUpdateCheck(c: Context, v: Boolean) = p(c).edit().putBoolean("update_check", v).apply()
 
+    /** 0 = Classic design, 1 = Neo design (default). */
+    fun design(c: Context): Int = p(c).getInt("design", 1)
+    fun setDesign(c: Context, v: Int) = p(c).edit().putInt("design", v).apply()
+
     /** Hours between automatic subscription refreshes; 0 = off. */
     fun subHours(c: Context): Int = p(c).getInt("sub_hours", 24)
     fun setSubHours(c: Context, v: Int) = p(c).edit().putInt("sub_hours", v).apply()

@@ -60,7 +60,7 @@ fun Field(
                 .fillMaxWidth()
                 .clip(shape)
                 .background(p.card)
-                .border(1.dp, p.cardBorder, shape)
+                .cardBorder(shape)
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
             BasicTextField(
@@ -88,7 +88,10 @@ fun Chip(text: String, selected: Boolean, onClick: () -> Unit) {
         fontWeight = FontWeight.Bold,
         modifier = Modifier
             .clip(shape)
-            .background(if (selected) p.accent else p.card)
+            .then(
+                if (Design.neo && selected) Modifier.background(Brush.horizontalGradient(listOf(p.accent, p.accent2)))
+                else Modifier.background(if (selected) p.accent else p.card)
+            )
             .border(1.dp, if (selected) p.accent else p.cardBorder, shape)
             .clickable { onClick() }
             .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -154,7 +157,7 @@ fun EditorDialog(initial: VpnConfig, isNew: Boolean, onDismiss: () -> Unit, onSa
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
+                .screenBackdrop()
         ) {
             Column(Modifier.fillMaxSize()) {
                 Text(

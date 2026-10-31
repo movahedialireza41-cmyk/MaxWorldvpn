@@ -33,18 +33,21 @@ object VpnState {
         blocking = false
         connectedAt = System.currentTimeMillis()
         AppLog.add("Connected")
+        History.begin()
         state = ConnState.CONNECTED
     }
 
     fun disconnected() {
         blocking = false
         if (state != ConnState.DISCONNECTED) AppLog.add("Disconnected")
+        History.end()
         connectedAt = 0L
         state = ConnState.DISCONNECTED
     }
 
     fun failed(message: String) {
         AppLog.add("Failed: " + message)
+        History.end()
         error = message
         connectedAt = 0L
         state = ConnState.DISCONNECTED

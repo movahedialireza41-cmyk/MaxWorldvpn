@@ -51,10 +51,10 @@ import javax.net.ssl.X509TrustManager
 // ------------------------------------------------------------------ what's new
 
 @Composable
-private fun FullScreenDialog(onDismiss: () -> Unit, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
+fun FullScreenDialog(onDismiss: () -> Unit, content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit) {
     val p = LocalPalette.current
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))) {
+        Box(Modifier.fillMaxSize().screenBackdrop()) {
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp), content = content)
         }
     }
@@ -67,6 +67,10 @@ fun WhatsNewDialog(onDismiss: () -> Unit) {
     FullScreenDialog(onDismiss) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Spacer(Modifier.height(40.dp))
+            if (Design.neo) {
+                NeoBadge()
+                Spacer(Modifier.height(14.dp))
+            }
             Text(stringResource(R.string.whatsnew_title), color = p.accent, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(
                 stringResource(R.string.whatsnew_version_fmt, BuildConfigVersion.NAME),
@@ -244,6 +248,10 @@ fun UpdatePromptDialog(onLater: () -> Unit) {
     FullScreenDialog(onLater) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Spacer(Modifier.height(40.dp))
+            if (Design.neo) {
+                NeoBadge()
+                Spacer(Modifier.height(14.dp))
+            }
             Text(stringResource(R.string.upd_page_title), color = p.accent, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
             Text(
                 stringResource(R.string.whatsnew_version_fmt, info.version),

@@ -131,7 +131,7 @@ fun HomeScreen(onToggle: () -> Unit) {
                     lon = IpInfo.info?.lon,
                     modifier = Modifier.requiredSize(340.dp)
                 )
-                ConnectOrb(state = state, onClick = onToggle)
+                if (Design.neo) NeoOrb(state = state, onClick = onToggle) else ConnectOrb(state = state, onClick = onToggle)
             }
 
             Spacer(Modifier.height(26.dp))
@@ -154,13 +154,26 @@ fun HomeScreen(onToggle: () -> Unit) {
 
             if (state == ConnState.CONNECTED) {
                 val secs = ((now - VpnState.connectedAt) / 1000).coerceAtLeast(0)
-                Text(
-                    text = "%02d:%02d:%02d".format(secs / 3600, (secs / 60) % 60, secs % 60),
-                    color = p.text,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = 2.sp
-                )
+                val clock = "%02d:%02d:%02d".format(secs / 3600, (secs / 60) % 60, secs % 60)
+                if (Design.neo) {
+                    Text(
+                        text = clock,
+                        style = TextStyle(
+                            brush = Brush.horizontalGradient(listOf(p.accent, p.accent2)),
+                            fontSize = 34.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 3.sp
+                        )
+                    )
+                } else {
+                    Text(
+                        text = clock,
+                        color = p.text,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 2.sp
+                    )
+                }
             } else {
                 Text(
                     text = stringResource(R.string.hint_tap_connect),
@@ -180,7 +193,15 @@ fun HomeScreen(onToggle: () -> Unit) {
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .then(
+                            if (Design.neo) Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(p.danger.copy(alpha = 0.12f))
+                                .border(1.dp, p.danger.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                            else Modifier
+                        )
                         .clickable { VpnState.clearError() }
+                        .then(if (Design.neo) Modifier.padding(12.dp) else Modifier)
                 )
             }
 
@@ -275,7 +296,7 @@ private fun IpPill(state: ConnState) {
                 .padding(top = 12.dp)
                 .clip(shape)
                 .background(p.card)
-                .border(1.dp, p.cardBorder, shape)
+                .cardBorder(shape)
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -314,6 +335,20 @@ fun PingBadge(ping: Long) {
         ping == -1L -> stringResource(R.string.ping_untested)
         ping < 0 -> stringResource(R.string.ping_timeout)
         else -> stringResource(R.string.ms_unit, ping.toInt())
+    }
+    if (Design.neo) {
+        Row(
+            Modifier
+                .clip(RoundedCornerShape(50))
+                .background(color.copy(alpha = 0.14f))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.size(7.dp).clip(androidx.compose.foundation.shape.CircleShape).background(color))
+            Spacer(Modifier.size(6.dp))
+            Text(text = label, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        }
+        return
     }
     Text(
         text = label,
@@ -526,6 +561,7 @@ fun WorldBackground(connected: Boolean) {
 
     Canvas(Modifier.fillMaxSize()) {
         drawRect(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
+        if (Design.neo) drawNeoAurora(p, t, lineAlpha)
 
         val pts = dots.map { d ->
             Offset(

@@ -67,7 +67,7 @@ fun LogsDialog(onDismiss: () -> Unit) {
                 .fillMaxWidth()
                 .clip(shape)
                 .background(p.card)
-                .border(1.dp, p.cardBorder, shape)
+                .cardBorder(shape)
                 .padding(14.dp)
         ) {
             if (lines.isEmpty()) {
@@ -244,7 +244,7 @@ private fun FullDialog(onDismiss: () -> Unit, content: @Composable androidx.comp
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
+                .screenBackdrop()
         ) {
             Column(Modifier.fillMaxSize().padding(horizontal = 20.dp), content = content)
         }

@@ -32,7 +32,8 @@ object AutoConnect {
                 cm.unregisterNetworkCallback(pi)
             } catch (ignored: Exception) {
             }
-            if (Prefs.autoMode(app) != 0) {
+            TrustedWifi.init(app)
+            if (Prefs.autoMode(app) != 0 || (TrustedWifi.enabled && TrustedWifi.ssids.isNotEmpty())) {
                 val req = NetworkRequest.Builder()
                     .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                     .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
@@ -44,6 +45,7 @@ object AutoConnect {
     }
 
     fun onNetwork(ctx: Context) {
+        if (TrustedWifi.onNetwork(ctx)) return
         val mode = Prefs.autoMode(ctx)
         if (mode == 0) return
         if (VpnState.state != ConnState.DISCONNECTED) return

@@ -35,6 +35,7 @@ object Adv {
     var fragInterval = "10-20"
     var fingerprint = "chrome"
     var ipv6 = false
+    var shareLan = false // let other devices (hotspot) use the local proxy ports
 
     private class Preset(val ips: List<String>, val doh: String)
 
@@ -68,6 +69,7 @@ object Adv {
         fragInterval = p.getString("fragInterval", "10-20") ?: "10-20"
         fingerprint = p.getString("fingerprint", "chrome") ?: "chrome"
         ipv6 = p.getBoolean("ipv6", false)
+        shareLan = p.getBoolean("shareLan", false)
     }
 
     fun save() {
@@ -87,6 +89,7 @@ object Adv {
             ?.putString("fragInterval", fragInterval)
             ?.putString("fingerprint", fingerprint)
             ?.putBoolean("ipv6", ipv6)
+            ?.putBoolean("shareLan", shareLan)
             ?.apply()
     }
 

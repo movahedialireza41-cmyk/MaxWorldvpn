@@ -1,5 +1,7 @@
 package com.maxworld.app
 
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawBehind
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -63,6 +65,10 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -116,6 +122,50 @@ fun ServersScreen(onSelected: (VpnConfig) -> Unit) {
         scope.launch { speedRun(c) }
     }
 
+    var bestJob by remember { mutableStateOf<Job?>(null) }
+    var bestDone by remember { mutableIntStateOf(0) }
+    var bestTotal by remember { mutableIntStateOf(0) }
+
+    /** Pings every server (6 at a time), then picks the fastest one. */
+    fun testAndPickBest(targets: List<VpnConfig>) {
+        val list = targets.filter { !it.isGroup() }
+        if (list.isEmpty()) return
+        bestDone = 0
+        bestTotal = list.size
+        bestJob = scope.launch {
+            try {
+                val gate = Semaphore(6)
+                list.map { c ->
+                    async {
+                        gate.withPermit {
+                            testing.add(c.id)
+                            val ms = Tester.delay(c)
+                            ConfigStore.setPing(c.id, if (ms > 0) ms else -2L)
+                            testing.remove(c.id)
+                            bestDone++
+                        }
+                    }
+                }.awaitAll()
+                val best = ConfigStore.configs.filter { it.id in list.map { x -> x.id } && it.ping > 0 }.minByOrNull { it.ping }
+                if (best == null) {
+                    toast(ctx.getString(R.string.best_none))
+                } else {
+                    sort = 2
+                    if (best.id != ConfigStore.selectedId) {
+                        ConfigStore.select(best.id)
+                        onSelected(best)
+                    }
+                    toast(ctx.getString(R.string.best_picked_fmt, best.displayName(), best.ping.toInt()))
+                }
+            } finally {
+                list.forEach { testing.remove(it.id) }
+                bestJob = null
+            }
+        }
+    }
+
+    var confirmDead by remember { mutableStateOf(false) }
+
     fun handleText(text: String) {
         when (val r = Importer.fromText(text)) {
             is Imported.Servers ->
@@ -157,6 +207,24 @@ fun ServersScreen(onSelected: (VpnConfig) -> Unit) {
                 else -> list
             }
         }
+
+    if (confirmDead) {
+        val dead = ConfigStore.configs.filter { it.ping == -2L && !it.isGroup() }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirmDead = false },
+            title = { Text(stringResource(R.string.dead_title)) },
+            text = { Text(stringResource(R.string.dead_body_fmt, dead.size)) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    dead.forEach { ConfigStore.remove(it.id) }
+                    confirmDead = false
+                }) { Text(stringResource(R.string.delete)) }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(onClick = { confirmDead = false }) { Text(stringResource(R.string.cancel)) }
+            }
+        )
+    }
 
     Box(Modifier.fillMaxSize()) {
         WorldBackground(connected = false)
@@ -211,6 +279,22 @@ fun ServersScreen(onSelected: (VpnConfig) -> Unit) {
                     Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    Chip(
+                        if (bestJob != null) stringResource(R.string.best_running_fmt, bestDone, bestTotal) else stringResource(R.string.best_test),
+                        bestJob != null
+                    ) {
+                        val running = bestJob
+                        if (running != null) {
+                            running.cancel()
+                        } else {
+                            testAndPickBest(shown.toList())
+                        }
+                    }
+                    if (ConfigStore.configs.any { it.ping == -2L && !it.isGroup() }) {
+                        Chip(stringResource(R.string.dead_remove_fmt, ConfigStore.configs.count { it.ping == -2L && !it.isGroup() }), false) {
+                            confirmDead = true
+                        }
+                    }
                     Chip(stringResource(R.string.sub_title), false) { subPrefill = ""; showSubs = true }
                     Chip(
                         stringResource(if (speedAllJob != null) R.string.servers_stop else R.string.servers_speed_all),
@@ -401,8 +485,8 @@ private fun DialogSurface(content: @Composable androidx.compose.foundation.layou
         Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
-            .border(1.dp, p.cardBorder, shape)
+            .screenBackdrop()
+            .cardBorder(shape)
             .padding(20.dp),
         content = content
     )
@@ -422,7 +506,7 @@ private fun MenuRow(text: String, onClick: () -> Unit) {
             .padding(vertical = 4.dp)
             .clip(shape)
             .background(p.card)
-            .border(1.dp, p.cardBorder, shape)
+            .cardBorder(shape)
             .clickable { onClick() }
             .padding(horizontal = 16.dp, vertical = 16.dp)
     )
@@ -437,7 +521,7 @@ private fun SearchBox(value: String, onChange: (String) -> Unit) {
             .fillMaxWidth()
             .clip(shape)
             .background(p.card)
-            .border(1.dp, p.cardBorder, shape)
+            .cardBorder(shape)
             .padding(horizontal = 18.dp, vertical = 12.dp)
     ) {
         if (value.isEmpty()) {
@@ -498,18 +582,46 @@ private fun ServerCard(
     onDelete: () -> Unit
 ) {
     val p = LocalPalette.current
-    val shape = RoundedCornerShape(p.cornerDp.dp)
+    val neo = Design.neo
+    val shape = RoundedCornerShape((p.cornerDp + (if (neo) 4f else 0f)).dp)
     val border by animateColorAsState(
         if (selected) p.accent else p.cardBorder, tween(350), label = "cardBorder"
     )
+    val glow by androidx.compose.animation.core.animateFloatAsState(if (selected) 1f else 0f, tween(450), label = "cardGlow")
+    val pingColor = when {
+        c.ping == -1L -> p.muted
+        c.ping < 0 -> p.danger
+        c.ping < 300 -> p.ok
+        c.ping < 800 -> p.warn
+        else -> p.danger
+    }
     val groupName = if (c.group.isEmpty()) "" else Subs.nameOf(c.group)
 
     Column(
         Modifier
             .fillMaxWidth()
+            .then(if (neo) Modifier.fadeSlideIn() else Modifier)
             .clip(shape)
             .background(p.card)
-            .border(if (selected) 2.dp else 1.dp, border, shape)
+            .then(
+                if (neo) {
+                    Modifier
+                        .background(Brush.horizontalGradient(listOf(p.accent.copy(alpha = 0.20f * glow), Color.Transparent)))
+                        .drawBehind {
+                            // a coloured edge that shows how fast the server is
+                            val w = 4.dp.toPx()
+                            val x = if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) size.width - w else 0f
+                            drawRect(pingColor, topLeft = Offset(x, 0f), size = Size(w, size.height))
+                        }
+                        .border(
+                            if (selected) 2.dp else 1.dp,
+                            Brush.linearGradient(if (selected) listOf(p.accent, p.accent2) else listOf(p.cardBorder, p.cardBorder)),
+                            shape
+                        )
+                } else {
+                    Modifier.border(if (selected) 2.dp else 1.dp, border, shape)
+                }
+            )
             .clickable { onClick() }
             .padding(start = 8.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
     ) {
@@ -636,7 +748,7 @@ private fun SubsDialog(prefillUrl: String, onDismiss: () -> Unit) {
                             .fillMaxWidth()
                             .clip(shape)
                             .background(p.card)
-                            .border(1.dp, p.cardBorder, shape)
+                            .cardBorder(shape)
                             .padding(14.dp)
                     ) {
                         Text(s.name, color = p.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)

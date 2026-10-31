@@ -1,5 +1,8 @@
 package com.maxworld.app
 
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.offset
 import android.net.VpnService
 import android.os.Bundle
 import android.widget.Toast
@@ -10,6 +13,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -241,8 +246,14 @@ class MainActivity : ComponentActivity() {
                             targetState = tab,
                             transitionSpec = {
                                 val dir = if (targetState > initialState) 1 else -1
-                                (fadeIn(tween(320)) + slideInHorizontally(tween(380)) { w -> w / 8 * dir }) togetherWith
-                                    (fadeOut(tween(220)) + slideOutHorizontally(tween(380)) { w -> -w / 8 * dir })
+                                if (Design.neo) {
+                                    (fadeIn(tween(380)) + scaleIn(tween(480), initialScale = 0.93f) +
+                                        slideInHorizontally(tween(480)) { w -> w / 10 * dir }) togetherWith
+                                        (fadeOut(tween(220)) + scaleOut(tween(320), targetScale = 1.05f))
+                                } else {
+                                    (fadeIn(tween(320)) + slideInHorizontally(tween(380)) { w -> w / 8 * dir }) togetherWith
+                                        (fadeOut(tween(220)) + slideOutHorizontally(tween(380)) { w -> -w / 8 * dir })
+                                }
                             },
                             label = "tabs"
                         ) { t ->
@@ -286,6 +297,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun BottomBar(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
     val p = LocalPalette.current
+    if (Design.neo) {
+        NeoBar(selected, onSelect, modifier)
+        return
+    }
     val shape = RoundedCornerShape(32.dp)
     Row(
         modifier = modifier
@@ -307,12 +322,50 @@ private fun BottomBar(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier
 }
 
 @Composable
+private fun NeoBar(selected: Int, onSelect: (Int) -> Unit, modifier: Modifier) {
+    val p = LocalPalette.current
+    val shape = RoundedCornerShape(36.dp)
+    val pos by animateFloatAsState(selected.toFloat(), spring(dampingRatio = 0.6f, stiffness = 260f), label = "navPos")
+    androidx.compose.foundation.layout.BoxWithConstraints(
+        modifier = modifier
+            .navigationBarsPadding()
+            .padding(horizontal = 22.dp, vertical = 14.dp)
+            .fillMaxWidth()
+            .height(72.dp)
+            .clip(shape)
+            .background(Brush.verticalGradient(listOf(p.card, p.bgBottom.copy(alpha = 0.92f))))
+            .border(
+                1.dp,
+                Brush.linearGradient(listOf(p.accent.copy(alpha = 0.6f), p.cardBorder, p.accent2.copy(alpha = 0.5f))),
+                shape
+            )
+            .padding(6.dp)
+    ) {
+        val itemW = maxWidth / 3
+        Box(
+            Modifier
+                .offset(x = itemW * pos)
+                .width(itemW)
+                .fillMaxSize()
+                .clip(RoundedCornerShape(30.dp))
+                .background(Brush.horizontalGradient(listOf(p.accent.copy(alpha = 0.30f), p.accent2.copy(alpha = 0.30f))))
+                .border(1.dp, p.accent.copy(alpha = 0.55f), RoundedCornerShape(30.dp))
+        )
+        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+            listOf(R.string.nav_home, R.string.nav_servers, R.string.nav_settings).forEachIndexed { i, res ->
+                NavItem(i, stringResource(res), selected == i, Modifier.weight(1f)) { onSelect(i) }
+            }
+        }
+    }
+}
+
+@Composable
 private fun NavItem(kind: Int, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val p = LocalPalette.current
     val haptic = LocalHapticFeedback.current
     val color by animateColorAsState(if (selected) p.accent else p.muted, tween(300), label = "navColor")
     val bg by animateColorAsState(
-        if (selected) p.accent.copy(alpha = 0.14f) else Color.Transparent, tween(300), label = "navBg"
+        if (selected && !Design.neo) p.accent.copy(alpha = 0.14f) else Color.Transparent, tween(300), label = "navBg"
     )
     val lift by animateFloatAsState(if (selected) -3f else 0f, spring(dampingRatio = 0.5f), label = "navLift")
 

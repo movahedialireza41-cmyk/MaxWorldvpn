@@ -65,7 +65,7 @@ fun ThemesDialog(themeId: String, onTheme: (String) -> Unit, onDismiss: () -> Un
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(p.bgTop, p.bgBottom)))
+                .screenBackdrop()
                 .statusBarsPadding()
         ) {
             Column(Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
